@@ -3,7 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PaperSpriteComponent.h"
 #include "GameFramework/Actor.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "Asteroid.generated.h"
 
 class UPaperSpriteComponent;
@@ -26,17 +29,40 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float Speed = 200.f;
 
-	UPROPERTY()
-	FVector MovementDirection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	int32 Health = 2;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Asteroid|Visual")
+	UPaperSprite* SpriteForHP1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Asteroid|Visual")
+	UPaperSprite* SpriteForHP2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Asteroid|Visual")
+	UPaperSprite* SpriteForHP3;
+
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	int32 InitialHealth = 2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Asteroid")
+	float RotationSpeed = 90.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* ExplosionEffect;
+
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	void SetMovementDirection(FVector Direction);
+	void SetHealth(int32 NewHealth);
+	void UpdateSpriteBasedOnHealth();
 
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 };

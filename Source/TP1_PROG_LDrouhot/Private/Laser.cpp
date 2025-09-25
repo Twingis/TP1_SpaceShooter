@@ -1,4 +1,6 @@
 #include "Laser.h"
+
+#include "Asteroid.h"
 #include "PaperSpriteComponent.h"
 #include "Engine/World.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -21,7 +23,6 @@ void ALaser::BeginPlay()
 	
 }
 
-
 void ALaser::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -34,5 +35,19 @@ void ALaser::Tick(float DeltaTime)
 
 	
 	AddActorWorldOffset(DeltaMovement, true);
+}
+
+void ALaser::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (OtherActor && OtherActor != this)
+		// Si c'est un laser, détruire les deux
+			if  (OtherActor && OtherActor->IsA(AAsteroid::StaticClass()))
+			{
+			
+				Destroy();
+			
+			}
 }
 

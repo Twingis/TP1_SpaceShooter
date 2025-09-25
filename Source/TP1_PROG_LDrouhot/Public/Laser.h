@@ -26,7 +26,7 @@ protected:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float Speed = 1200.f;
+	float Speed = 2000.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Life")
 	float LifeSeconds = 3.0f;
@@ -35,5 +35,7 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 };
