@@ -28,13 +28,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	TSubclassOf<class AAsteroid> AsteroidClass;
 
+	// X Position
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+	float SpawnX = -25.f;
 
 	FTimerHandle SpawnTimerHandle;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
-	float SpawnInterval = 2.0f;
+	float SpawnInterval = 0.75f;
 
 	// Initial Force
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
-	float Force = 500.f;
+	float Force = 50000.f;
 };
