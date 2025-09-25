@@ -31,10 +31,8 @@ void AAsteroidSpawner::Tick(float DeltaTime)
 
 void AAsteroidSpawner::SpawnAsteroid()
 {
-    // Vérifie que la classe de l'astéroïde est bien assignée
     if (!AsteroidClass) return;
-
-    // 1. Détermine la position de spawn aléatoire
+	
     FVector SpawnLocation;
     FVector2D ViewportSize;
     if (GEngine && GEngine->GameViewport)
@@ -42,28 +40,28 @@ void AAsteroidSpawner::SpawnAsteroid()
        GEngine->GameViewport->GetViewportSize(ViewportSize);
     }
     
-    // Choisir un bord de l'écran au hasard
+    
     int32 Edge = FMath::RandRange(0, 3); // 0: Haut, 1: Droite, 2: Bas, 3: Gauche
 
     switch (Edge)
     {
-    case 0: // Haut
-       SpawnLocation.X = -25.f;
+    case 0:
+       SpawnLocation.X = SpawnX;
        SpawnLocation.Y = FMath::RandRange(-ViewportSize.X / 2.f, ViewportSize.X / 2.f);
        SpawnLocation.Z = ViewportSize.Y / 2.f + 500.f; // 500.f est un offset pour être hors-écran
        break;
-    case 1: // Droite
-       SpawnLocation.X = -25.f;
+    case 1: 
+       SpawnLocation.X = SpawnX;
        SpawnLocation.Y = ViewportSize.X / 2.f + 500.f;
        SpawnLocation.Z = FMath::RandRange(-ViewportSize.Y / 2.f, ViewportSize.Y / 2.f);
        break;
-    case 2: // Bas
-       SpawnLocation.X = -25.f;
+    case 2: 
+       SpawnLocation.X = SpawnX;
        SpawnLocation.Y = FMath::RandRange(-ViewportSize.X / 2.f, ViewportSize.X / 2.f);
        SpawnLocation.Z = -ViewportSize.Y / 2.f - 500.f;
        break;
-    case 3: // Gauche
-       SpawnLocation.X = -25.f;
+    case 3: 
+       SpawnLocation.X = SpawnX;
        SpawnLocation.Y = -ViewportSize.X / 2.f - 500.f;
        SpawnLocation.Z = FMath::RandRange(-ViewportSize.Y / 2.f, ViewportSize.Y / 2.f);
        break;
@@ -75,14 +73,71 @@ void AAsteroidSpawner::SpawnAsteroid()
 	
     FActorSpawnParameters SpawnParams;
     AAsteroid* NewAsteroid = GetWorld()->SpawnActor<AAsteroid>(AsteroidClass, SpawnLocation, SpawnRotation, SpawnParams);
-
-    // 4. Calcule et assigne une direction de mouvement à l'astéroïde
+	
     if (NewAsteroid)
     {
-        FVector TargetLocation(0.f, FMath::RandRange(-ViewportSize.X / 4.f, ViewportSize.X / 4.f), FMath::RandRange(-ViewportSize.Y / 4.f, ViewportSize.Y / 4.f));
+    	int32 RandomHP = FMath::RandRange(1, 3);
+    	NewAsteroid->SetHealth(RandomHP);
     	
-        FVector Direction = (TargetLocation - SpawnLocation).GetSafeNormal();
+    	bool bGoToCenter = FMath::RandBool();
+
+    	FVector Direction;
+
+    	if (bGoToCenter)
+    	{
+    		FVector TargetLocation(
+				0.f,
+				FMath::RandRange(-ViewportSize.X / 4.f, ViewportSize.X / 4.f),
+				FMath::RandRange(-ViewportSize.Y / 4.f, ViewportSize.Y / 4.f)
+			);
+
+    		Direction = (TargetLocation - SpawnLocation).GetSafeNormal();
+    	}
+    	else
+    	{
+    		int32 OtherEdge = FMath::RandRange(0, 3);
+
+    		FVector OtherSpawnLocation = SpawnLocation;
+
+    		switch (OtherEdge)
+    		{
+    		case 0: // Haut
+    			OtherSpawnLocation = FVector(
+					SpawnX,
+					FMath::RandRange(-ViewportSize.X / 2.f, ViewportSize.X / 2.f),
+					ViewportSize.Y / 2.f + 500.f
+				);
+    			break;
+    		case 1: // Droite
+    			OtherSpawnLocation = FVector(
+					SpawnX,
+					ViewportSize.X / 2.f + 500.f,
+					FMath::RandRange(-ViewportSize.Y / 2.f, ViewportSize.Y / 2.f)
+				);
+    			break;
+    		case 2: // Bas
+    			OtherSpawnLocation = FVector(
+					SpawnX,
+					FMath::RandRange(-ViewportSize.X / 2.f, ViewportSize.X / 2.f),
+					-ViewportSize.Y / 2.f - 500.f
+				);
+    			break;
+    		case 3: // Gauche
+    			OtherSpawnLocation = FVector(
+					SpawnX,
+					-ViewportSize.X / 2.f - 500.f,
+					FMath::RandRange(-ViewportSize.Y / 2.f, ViewportSize.Y / 2.f)
+				);
+    			break;
+    		}
+    		
+    		Direction = (OtherSpawnLocation - SpawnLocation).GetSafeNormal();
+    	}
     	
-    	NewAsteroid->SpriteComponent->AddForce(Direction * Force, NAME_None, true);
+    	if (NewAsteroid->SpriteComponent)
+    	{
+    		NewAsteroid->SpriteComponent->AddForce(Direction * Force, NAME_None, true);
+    	}
+
     }
 }

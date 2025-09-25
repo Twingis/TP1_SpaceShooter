@@ -2,8 +2,11 @@
 
 
 #include "Asteroid.h"
+#include "PaperSprite.h"
+#include "GameStateSpace.h"
 #include "Laser.h"
 #include "PaperSpriteComponent.h"
+#include "SpaceShip.h"
 #include "Components/BoxComponent.h"
 
 
@@ -20,7 +23,7 @@ AAsteroid::AAsteroid()
 	SpriteComponent->SetGenerateOverlapEvents(false);
 	SpriteComponent->BodyInstance.bUseCCD = true;
 
-	CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CatcherCollision"));
+	CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("AsteroidCollision"));
 	CollisionComponent->SetupAttachment(SpriteComponent);
 	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Overlap);
@@ -31,6 +34,14 @@ AAsteroid::AAsteroid()
 void AAsteroid::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!CollisionComponent)
+	{
+		CollisionComponent = FindComponentByClass<UBoxComponent>();
+	}
+
+	RotationSpeed = FMath::RandRange(-120.f, 120.f);
+
 	
 }
 
@@ -38,38 +49,107 @@ void AAsteroid::BeginPlay()
 void AAsteroid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (SpriteComponent)
+	{
+		FRotator Rot = SpriteComponent->GetComponentRotation();
+		Rot.Pitch += RotationSpeed * DeltaTime; 
+		SpriteComponent->SetWorldRotation(Rot);
+	}
 }
 
-void AAsteroid::SetMovementDirection(FVector Direction)
+void AAsteroid::SetHealth(int32 NewHealth)
 {
-	MovementDirection = Direction;
+	Health = NewHealth;
+	InitialHealth = NewHealth;
+	UpdateSpriteBasedOnHealth();
+	
+}
+
+void AAsteroid::UpdateSpriteBasedOnHealth()
+{
+	if (!SpriteComponent)
+	{
+		return;
+	}
+
+	UPaperSprite* NewSprite = nullptr;
+
+	if (InitialHealth <= 1)
+	{
+		NewSprite = SpriteForHP1;
+	}
+	else if (InitialHealth == 2)
+	{
+		NewSprite = SpriteForHP2;
+	}
+	else 
+	{
+		NewSprite = SpriteForHP3;
+	}
+
+	
+	if (NewSprite)
+	{
+		SpriteComponent->SetSprite(NewSprite);
+		FBoxSphereBounds SpriteBounds = SpriteComponent->CalcLocalBounds();
+		FVector BoxExtent = SpriteBounds.BoxExtent;
+
+		// 🔹 Optionnel : agrandir légèrement la hitbox
+		float CollisionScale = 1.1f;
+		BoxExtent *= CollisionScale;
+
+		CollisionComponent->SetBoxExtent(BoxExtent, true);
+		CollisionComponent->SetRelativeLocation(FVector::ZeroVector);
+
+	}
 }
 
 
-
-// ... (le reste de ton code)
 
 void AAsteroid::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
     
-	// S'assurer que l'autre acteur existe et n'est pas l'astéroïde actuel
+	
 	if (OtherActor && OtherActor != this)
 	{
-		// Si c'est un laser, détruire les deux
 		if  (OtherActor && OtherActor->IsA(ALaser::StaticClass()))
 		{
-			Destroy();
+			Health--;
+			AGameStateSpace* GameState = GetWorld()->GetGameState<AGameStateSpace>();
+			if (Health <= 0)
+			{
+				if (ExplosionEffect)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						GetWorld(),
+						ExplosionEffect,
+						GetActorLocation(),
+						FRotator::ZeroRotator
+					);
+				}
+				GameState->AddScore(InitialHealth * 100);
+				Destroy();
+			}
+			
 		}
 		else
 		{
-			// Sinon, si c'est un autre astéroïde, détruire les deux
-			AAsteroid* OtherAsteroid = Cast<AAsteroid>(OtherActor);
-			if (OtherAsteroid)
+			if  (OtherActor && OtherActor->IsA(ASpaceShip::StaticClass()))
 			{
-				OtherAsteroid->Destroy();
+				if (ExplosionEffect)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						GetWorld(),
+						ExplosionEffect,
+						GetActorLocation(),
+						FRotator::ZeroRotator
+					);
+				}
 				Destroy();
 			}
+			
 		}
 	}
 }
