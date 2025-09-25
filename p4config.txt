@@ -1,0 +1,4 @@
+P4PORT=ssl:perforce.uqac.ca:1666
+P4USER=ldrouhot
+P4CLIENT=ldrouhot_PC_Loris_SpaceShootDevelop
+P4IGNORE=.p4ignore.txt;.gitignore
